@@ -1,6 +1,9 @@
 import React, { useState } from 'react'
 import PasswordInput from '../../components/Input/PasswordInput'
 import { useNavigate } from 'react-router-dom'
+import { validateEmail } from '../../utils/helper'
+import axiosInstance from '../../utils/axiosinstance';
+
 
 const Login = () => {
     const [email, setEmail] = useState("")
@@ -9,7 +12,41 @@ const Login = () => {
     const navigate = useNavigate()
 
     const handleLogin = async (e) => {
-        e.preventDefault()
+        e.preventDefault();
+        if(!validateEmail(email)){
+            setError("Please enter a valid email address.");
+            return;
+        }
+
+        if(!password){
+            setError("Please enter th password.");
+            return;
+        }
+
+        setError("");
+
+        //Login API Call 
+        try{
+            const response = await axiosInstance.post("/login", {
+                email: email,
+                password: password,
+            });
+
+            //Handle successful login response
+            if(response.data && response.data.accessToken){
+                localStorage.setItem("token", response.data.accessToken);
+                navigate("/dashboard");
+            }
+        } catch(error){
+            //Handle login error
+            if(error.response && error.response.data && error.response.data.message){
+                setError(error.response.data.message);
+            }
+            else{
+                setError("An unexpeted error occurred. Please try again.");
+            }
+        }
+
     }
     return (
         <div className='h-screen bg-cyan-50 overflow-hidden relative'>
@@ -27,6 +64,9 @@ const Login = () => {
                         <h4 className='text-2xl font-semibold mb-7'>Login</h4>
                         <input type='text' placeholder='Email' className='input-box' value={email} onChange={({ target }) => { setEmail(target.value) }} />
                         <PasswordInput value={password} onChange={({ target }) => { setPassword(target.value) }} />
+
+                        {error && <p className="text-red-500 text-xs pb-1">{error}</p>}
+
                         <button type='submit' className='btn-primary'>LOGIN</button>
                         <p className='text-xs text-slate-500 text-center my-4'>Or</p>
                         <button type='submit' className='btn-primary btn-light' onClick={() => {
