@@ -1,18 +1,26 @@
-import React, { use } from 'react'
-import LOGO from '../assets/images/logo.svg'
-import ProfileInfo from './Cards/ProfileInfo'
+import React from 'react';
+import LOGO from '../assets/images/logo.svg';
+import ProfileInfo from './Cards/ProfileInfo';
+import { useNavigate } from 'react-router-dom';
 
 const Navbar = ({ userInfo }) => {
+    const isToken = localStorage.getItem("token");
+    const navigate = useNavigate();
+
+    const onLogout = () => {
+        localStorage.clear();
+        navigate("/login");
+    };
+
     return (
-        <div className='bg-white flex items-center justify-between px-6 py-2 drop-shadow sticky top-0 z-10'>
-            <div className='flex items-center'>
-                <img src={LOGO} alt="Wander Notes" className='h-9' />
-                <h4 className=''>WanderNotes</h4>
+        <div className="bg-white flex items-center justify-between px-6 py-2 drop-shadow sticky top-0 z-10">
+            <img src={LOGO} alt="travel story" className="h-9" />
 
-            </div>
-            <ProfileInfo userInfo={userInfo} />
+            {isToken && (
+                <ProfileInfo userInfo={userInfo} onLogout={onLogout} />
+            )}
         </div>
-    )
-}
+    );
+};
 
-export default Navbar
+export default Navbar;
