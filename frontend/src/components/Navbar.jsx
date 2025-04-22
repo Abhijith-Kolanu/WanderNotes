@@ -3,14 +3,26 @@ import LOGO from '../assets/images/logo.svg';
 import exam from '../assets/images/logo2.png'
 import ProfileInfo from './Cards/ProfileInfo';
 import { useNavigate } from 'react-router-dom';
+import SearchBar from './Input/SearchBar';
 
-const Navbar = ({ userInfo }) => {
+const Navbar = ({ userInfo, searchQuery, setSearchQuery, onSearchNote, handleClearSearch }) => {
     const isToken = localStorage.getItem("token");
     const navigate = useNavigate();
 
     const onLogout = () => {
         localStorage.clear();
         navigate("/login");
+    };
+
+    const handleSearch = () =>{
+        if(searchQuery){
+            onSearchNote(searchQuery);
+        }
+    };
+
+    const onClearSearch = () =>{
+        handleClearSearch();
+        setSearchQuery("");
     };
 
     return (
@@ -21,7 +33,17 @@ const Navbar = ({ userInfo }) => {
             </div>
 
             {isToken && (
-                <ProfileInfo userInfo={userInfo} onLogout={onLogout} />
+                <>
+                    <SearchBar 
+                        value={searchQuery} 
+                        onChange={({target}) =>{
+                            setSearchQuery(target.value);
+                        }}
+                        handleSearch={handleSearch}
+                        onClearSearch={onClearSearch}
+                    />
+                    <ProfileInfo userInfo={userInfo} onLogout={onLogout} />
+                </>
             )}
         </div>
 
