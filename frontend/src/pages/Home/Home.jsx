@@ -9,8 +9,14 @@ import "react-toastify/dist/ReactToastify.css"
 import Modal from "react-modal"
 import AddEditTravelStory from './AddEditTravelStory';
 import ViewTravelStory from './ViewTravelStory';
-import EmptyImg from "../../assets/images/logo2.png"
 import EmptyCard from '../../components/Cards/EmptyCard';
+import moment from "moment";
+import { DayPicker } from 'react-day-picker';
+import 'react-day-picker/dist/style.css';
+import FilterInfoTitle from '../../components/Cards/FilterInfoTitle';
+import { getEmptyCardMessage, getEmptyCardImg } from '../../utils/helper';
+
+
 
 const Home = () => {
     const navigate = useNavigate();
@@ -18,6 +24,8 @@ const Home = () => {
     const [allStories, setAllStories] = useState([]);
     const [searchQuery, setSearchQuery] = useState("");
     const [filterType, setFilterType] = useState('')
+    const [dateRange, setDateRange] = useState({from:null, to:null})
+
     const [openAddEditModal, setOpenAddEditModal] = useState({
         isShown: false,
         type: "add",
@@ -92,7 +100,14 @@ const Home = () => {
             // Update state
             if (response.data && response.data.story) {
                 toast.success("Story updated Successfully")
-                getAllTravelStories()
+
+                if(filterType === "search" && searchQuery){
+                    onSearchStory(searchQuery);
+                } else if(filterType === "date"){
+                    filterStoriesByDate(dateRange);
+                } else{
+                    getAllTravelStories();
+                }
             }
         } catch (error) {
             console.error("Failed to update favourite status", error);
@@ -112,8 +127,7 @@ const Home = () => {
                 setFilterType("search");
                 setAllStories(response.data.stories);
             }
-        }
-        catch(error){
+        } catch (err) {
             //Handle unexpected errors
             console.log("An unexpected error occurred. Please try again.")
         }
@@ -121,6 +135,40 @@ const Home = () => {
 
 
     const handleClearSearch = ()=>{
+        setFilterType("");
+        getAllTravelStories();
+    }
+
+
+    //Handle filter travel story by date range
+    const filterStoriesByDate = async (day) =>{
+        try {
+            const startDate = day.from ? moment(day.from).valueOf() :null;
+            const endDate = day.to ? moment(day.to).valueOf() : null;
+
+            if(startDate && endDate){
+                const response = await axiosInstance.get("/travel-stories/filter", {
+                    params: {startDate, endDate},
+                });
+
+                if(response.data && response.data.stories){
+                    setFilterType("date");
+                    setAllStories(response.data.stories);
+                }
+            }
+        } catch (error) {
+            console.log("An unexpected error occurred. Please try again.")
+        }
+    };
+
+    //Handle Date range select
+    const handleDayClick = (day)=>{
+        setDateRange(day);
+        filterStoriesByDate(day);
+    }
+
+    const resetFilter = ()=>{
+        setDateRange({from: null, to: null});
         setFilterType("");
         getAllTravelStories();
     }
@@ -137,10 +185,19 @@ const Home = () => {
             userInfo={userInfo}
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
-            handleSearch={onSearchStory}
+            onSearchNote={onSearchStory}
             handleClearSearch={handleClearSearch}
             />
             <div className="container mx-auto py-10">
+
+                <FilterInfoTitle
+                    filterType = {filterType}
+                    filterDates={dateRange}
+                    onClear = {() =>{
+                        resetFilter();
+                    }}
+                />
+
                 <div className="flex gap-7">
                     <div className="flex-1">
                         {allStories.length > 0 ? (
@@ -161,13 +218,28 @@ const Home = () => {
                             </div>
                         ) : (
                             <EmptyCard
-                                imgSrc={EmptyImg}
-                                message={"Start creating your first Travel Story! Click the 'Add' button to jot down your thoughts, ideas, and memories. Let's get started!"}
+                                imgSrc={getEmptyCardImg(filterType)}
+                                message = {getEmptyCardMessage(filterType)}
                             />
                         )}
                     </div>
+
+                    <div className="w-[350px]">
+                        <div className="bg-white border border-slate-200 shadow-lg shadow-slate-200/60 rounded-lg">
+                            <div className="p-3">
+                                <DayPicker
+                                    captionLayout="dropdown-buttons"
+                                    mode="range"
+                                    selected={dateRange}
+                                    onSelect={handleDayClick}
+                                    pageNavigation
+                                />
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
+
             <Modal
                 isOpen={openAddEditModal.isShown}
                 onRequestClose={() => { }}
