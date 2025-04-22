@@ -15,15 +15,16 @@ const Navbar = ({ userInfo }) => {
 
     return (
         <div className="bg-white flex items-center justify-between px-6 py-2 drop-shadow sticky top-0 z-10">
-            <div className='flex flex-row'>
-                <img src={exam} alt="travel story" className="h-9" />
-                <p className='text-primary'>WanderNotes</p>
+            <div className="flex items-center gap-2">
+                <img src={exam} alt="travel story" className="h-9 w-9 object-contain" />
+                <p className="text-primary text-lg font-semibold">WanderNotes</p>
             </div>
 
             {isToken && (
                 <ProfileInfo userInfo={userInfo} onLogout={onLogout} />
             )}
         </div>
+
     );
 };
 
