@@ -1,5 +1,6 @@
 import React from 'react';
 import LOGO from '../assets/images/logo.svg';
+import exam from '../assets/images/logo2.png'
 import ProfileInfo from './Cards/ProfileInfo';
 import { useNavigate } from 'react-router-dom';
 
@@ -14,7 +15,10 @@ const Navbar = ({ userInfo }) => {
 
     return (
         <div className="bg-white flex items-center justify-between px-6 py-2 drop-shadow sticky top-0 z-10">
-            <img src={LOGO} alt="travel story" className="h-9" />
+            <div className='flex flex-row'>
+                <img src={exam} alt="travel story" className="h-9" />
+                <p className='text-primary'>WanderNotes</p>
+            </div>
 
             {isToken && (
                 <ProfileInfo userInfo={userInfo} onLogout={onLogout} />

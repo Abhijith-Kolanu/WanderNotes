@@ -9,6 +9,8 @@ import "react-toastify/dist/ReactToastify.css"
 import Modal from "react-modal"
 import AddEditTravelStory from './AddEditTravelStory';
 import ViewTravelStory from './ViewTravelStory';
+import EmptyImg from "../../assets/images/logo2.png"
+import EmptyCard from '../../components/Cards/EmptyCard';
 
 const Home = () => {
     const navigate = useNavigate();
@@ -61,6 +63,22 @@ const Home = () => {
         setOpenViewModal({ isShown: true, data })
     };
 
+
+    const deleteTravelStory = async (data) => {
+        const storyId = data._id
+        try {
+            const response = await axiosInstance.delete("/delete-travel-story/" + storyId)
+            if (response.data && !response.data.error) {
+                toast.error("Story Deleted Successfully")
+                setOpenViewModal((prevState) => ({ ...prevState, isShown: false }))
+                getAllTravelStories()
+            }
+        }
+        catch (err) {
+            console.log("An unexpected error occurred, Please try again")
+        }
+    }
+
     // Handle toggling favourite
     const updateIsFavourite = async (storyData) => {
         const storyId = storyData._id
@@ -107,7 +125,10 @@ const Home = () => {
                                 ))}
                             </div>
                         ) : (
-                            <div className="text-center text-gray-500">No stories found.</div>
+                            <EmptyCard
+                                imgSrc={EmptyImg}
+                                message={"Start creating your first Travel Story! Click the 'Add' button to jot down your thoughts, ideas, and memories. Let's get started!"}
+                            />
                         )}
                     </div>
                 </div>
@@ -159,7 +180,9 @@ const Home = () => {
                         setOpenViewModal((prevState) => ({ ...prevState, isShown: false }))
                         handleEdit(openViewModel.data || null)
                     }}
-                    onDeleteClick={() => { }}
+                    onDeleteClick={() => {
+                        deleteTravelStory(openViewModel.data || null)
+                    }}
                 />
             </Modal>
             <button className='w-16 h-16 flex items-center justify-center rounded-full bg-primary hover:bg-cyan-400 fixed right-10 bottom-10' onClick={() => {

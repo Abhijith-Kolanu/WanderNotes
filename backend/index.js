@@ -223,7 +223,7 @@ app.put("/edit-story/:id", authenticateToken, async (req, res) => {
 
   try {
     // Find the travel story by ID and ensure it belongs to the authenticated user
-    const travelStory = await TravelStory.findOne({ _id: id, userId: req.user.id });
+    const travelStory = await TravelStory.findOne({ _id: id, userId: req.user.userId });
 
     if (!travelStory) {
       return res.status(404).json({ error: true, message: "Travel story not found" });
