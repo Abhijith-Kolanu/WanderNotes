@@ -25,9 +25,13 @@ const ViewTravelStory = ({ storyInfo, onClose, onUpdateClick, onDeleteClick }) =
             </div>
 
             <div className="flex flex-col gap-2 py-4">
-                <h1 className="text-2xl text-slate-950">
-                    {storyInfo && storyInfo.title}
-                </h1>
+                <div>
+                    <div className='flex-1 flex flex-col gap-2 py-4'>
+                        <h1 className='text-2xl text-slate-950'>
+                            {storyInfo && storyInfo.title}
+                        </h1>
+                    </div>
+                </div>
                 <div className='flex flex-row justify-between gap-3'>
                     <span className="text-xs text-slate-500">
                         {storyInfo && moment(storyInfo.visitedDate).format("Do MMM YYYY")}
@@ -47,6 +51,16 @@ const ViewTravelStory = ({ storyInfo, onClose, onUpdateClick, onDeleteClick }) =
                         </div>
                     )}
                 </div>
+            </div>
+            <img
+                src={storyInfo && storyInfo.imageUrl}
+                alt="Selected"
+                className='w-full h-[300px] object-cover rounded-lg'
+            />
+            <div className='mt-4'>
+                <p className='text-sm text-slate-950 leading-6 text-justify whitespace-pre-line'>
+                    {storyInfo.story}
+                </p>
             </div>
         </div>
     );
