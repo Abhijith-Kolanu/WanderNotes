@@ -8,6 +8,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import "react-toastify/dist/ReactToastify.css"
 import Modal from "react-modal"
 import AddEditTravelStory from './AddEditTravelStory';
+import ViewTravelStory from './ViewTravelStory';
 
 const Home = () => {
     const navigate = useNavigate();
@@ -16,6 +17,11 @@ const Home = () => {
     const [openAddEditModal, setOpenAddEditModal] = useState({
         isShown: false,
         type: "add",
+        data: null
+    })
+
+    const [openViewModel, setOpenViewModal] = useState({
+        isShown: false,
         data: null
     })
 
@@ -46,16 +52,9 @@ const Home = () => {
         }
     };
 
-    // Handle editing a story
-    const handleEdit = (item) => {
-        console.log("Edit clicked for:", item);
-        navigate(`/edit-story/${item._id}`);
-    };
-
     // Handle viewing a story
-    const handleViewStory = (item) => {
-        console.log("View clicked for:", item);
-        navigate(`/view-story/${item._id}`);
+    const handleViewStory = (data) => {
+        setOpenViewModal({ isShown: true, data })
     };
 
     // Handle toggling favourite
@@ -98,7 +97,6 @@ const Home = () => {
                                         date={item.visitedDate}
                                         visitedLocation={item.visitedLocation}
                                         isFavourite={item.isFavourite}
-                                        onEdit={() => handleEdit(item)}
                                         onClick={() => handleViewStory(item)}
                                         onFavouriteClick={() => updateIsFavourite(item)}
                                     />
@@ -122,6 +120,8 @@ const Home = () => {
                 appElement={document.getElementById("root")}
                 className="model-box"
             >
+
+
                 <AddEditTravelStory
                     type={openAddEditModal.type}
                     storyInfo={openAddEditModal.data}
@@ -129,6 +129,28 @@ const Home = () => {
                         setOpenAddEditModal({ isShown: false, type: "add", data: null })
                     }}
                     getAllTravelStories={getAllTravelStories}
+                />
+            </Modal>
+
+            <Modal
+                isOpen={openViewModel.isShown}
+                onRequestClose={() => { }}
+                style={{
+                    overlay: {
+                        backgroundColor: "rgba(0,0,0,0.2)",
+                        zIndex: 999
+                    },
+                }}
+                appElement={document.getElementById("root")}
+                className="model-box"
+            >
+
+
+                <ViewTravelStory
+                    storyInfo={openViewModel.data || null}
+                    onClose={() => { }}
+                    onUpdateClick={() => { }}
+                    onDeleteClick={() => { }}
                 />
             </Modal>
             <button className='w-16 h-16 flex items-center justify-center rounded-full bg-primary hover:bg-cyan-400 fixed right-10 bottom-10' onClick={() => {
