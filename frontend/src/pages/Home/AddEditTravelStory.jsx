@@ -27,7 +27,7 @@ const AddEditTravelStory = ({ storyInfo, type, onClose, getAllTravelStories }) =
             }
             if (typeof storyImg === "object") {
                 const imageUploadRes = await uploadImage(storyImg)
-                imageUrl = imageUploadRes.cloudinaryUrl || imageUploadRes.imageUrl || ""
+                imageUrl = imageUploadRes.imageUrl || ""
                 postData = {
                     ...postData,
                     imageUrl: imageUrl
@@ -51,7 +51,7 @@ const AddEditTravelStory = ({ storyInfo, type, onClose, getAllTravelStories }) =
             let imageUrl = ""
             if (storyImg) {
                 const imageUploadRes = await uploadImage(storyImg)
-                imageUrl = imageUploadRes.cloudinaryUrl || imageUploadRes.imageUrl || ""
+                imageUrl = imageUploadRes.imageUrl || ""
             }
             const response = await axiosInstance.post("/add-travel-story", {
                 title, story, imageUrl: imageUrl || "", visitedLocation,
