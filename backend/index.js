@@ -1,12 +1,12 @@
 require('dotenv').config();
-
+const multer = require("multer");
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const express = require('express');
 const cors = require('cors');
-
+const { upload } = require("./cloudinaryConfig"); // import multer with cloudinary
+const cloudinary = require("cloudinary").v2;
 const jwt = require('jsonwebtoken');
-const upload = require('./multer');
 const fs = require('fs');
 const path = require('path');
 
@@ -114,16 +114,19 @@ app.get('/get-user', authenticateToken, async (req, res) => {
 app.post("/image-upload", upload.single("image"), async (req, res) => {
   try {
     if (!req.file) {
-      return res
-        .status(400)
-        .json({ error: true, message: "No image uploaded" });
+      return res.status(400).json({
+        error: true,
+        message: "No image uploaded",
+      });
     }
 
-    const imageUrl = `http://localhost:8000/uploads/${req.file.filename}`;
-
-    res.status(201).json({ imageUrl });
+    res.json({
+      message: "Image uploaded successfully!",
+      cloudinaryUrl: req.file.path, // this is the Cloudinary URL
+    });
   } catch (error) {
-    res.status(500).json({ error: true, message: error.message });
+    console.error(error);
+    res.status(500).json({ error: true, message: "Upload failed" });
   }
 });
 

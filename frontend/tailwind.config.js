@@ -13,8 +13,8 @@ module.exports = {
         secondary: "#EF863E"
       },
       backgroundImage: {
-        "login-bg-img": "url('./src/assets/images/login-bg-image.jpg')",
-        "signup-bg-img": "url('./src/assets/images/signup-bg-img.jpeg')",
+        "login-bg-img": "url('/login-bg-image.jpg')",
+        "signup-bg-img": "url('/signup-bg-img.jpeg')",
       }
     },
   },
