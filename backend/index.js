@@ -19,95 +19,131 @@ mongoose.connect(process.env.connectionString);
 
 const app = express();
 app.use(express.json());
-app.use(cors({ origin: "*" }));
+const allowedOrigins = [
+  'https://wandernotes-uzfl.onrender.com', // backend
+  'https://wandernotes-<your-vercel-id>.vercel.app', // frontend (replace with your actual Vercel URL)
+  'http://localhost:5173', // local frontend for development
+];
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps, curl, etc.)
+    if (!origin) return callback(null, true);
+    if (process.env.NODE_ENV === 'production') {
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      } else {
+        return callback(new Error('Not allowed by CORS'));
+      }
+    } else {
+      // In development, allow all origins
+      return callback(null, true);
+    }
+  },
+  credentials: true,
+}));
 
 //Create Account
 app.post('/create-account', async (req, res) => {
-  const { fullName, email, password } = req.body;
+  try {
+    const { fullName, email, password } = req.body;
 
-  if (!fullName || !email || !password) {
-    return res.status(400).json({ error: true, message: "All fields are required" });
-  }
-
-  const isUser = await User.findOne({ email });
-  if (isUser) {
-    return res.status(400).json({ error: true, message: "User already exists" });
-  }
-
-  const hashedPassword = await bcrypt.hash(password, 10);
-
-  const user = new User({
-    fullName,
-    email,
-    password: hashedPassword,
-  });
-
-  await user.save();
-
-  const accessToken = jwt.sign(
-    { userId: user._id },
-    process.env.ACCESS_TOKEN_SECRET,
-    {
-      expiresIn: "72h"
+    if (!fullName || !email || !password) {
+      return res.status(400).json({ error: true, message: "All fields are required" });
     }
-  );
 
-  return res.status(201).json({
-    error: false,
-    user: { fullName: user.fullName, email: user.email },
-    accessToken,
-    message: "Registration successful",
-  });
+    const isUser = await User.findOne({ email });
+    if (isUser) {
+      return res.status(400).json({ error: true, message: "User already exists" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const user = new User({
+      fullName,
+      email,
+      password: hashedPassword,
+    });
+
+    await user.save();
+
+    const accessToken = jwt.sign(
+      { userId: user._id },
+      process.env.ACCESS_TOKEN_SECRET,
+      {
+        expiresIn: "72h"
+      }
+    );
+
+    return res.status(201).json({
+      error: false,
+      user: { fullName: user.fullName, email: user.email },
+      accessToken,
+      message: "Registration successful",
+    });
+  } catch (error) {
+    console.error("Error in /create-account:", error);
+    return res.status(500).json({ error: true, message: "Internal server error" });
+  }
 });
 
 app.post('/login', async (req, res) => {
-  const { email, password } = req.body;
+  try {
+    const { email, password } = req.body;
 
-  if (!email || !password) {
-    return res.status(400).json({ message: "Email and Password are required" });
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and Password are required" });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: "User not found" });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid password" });
+    }
+
+    const accessToken = jwt.sign(
+      { userId: user._id },
+      process.env.ACCESS_TOKEN_SECRET,
+      { expiresIn: "72h" }
+    );
+
+    return res.status(200).json({
+      message: "Login successful",
+      user: {
+        fullName: user.fullName,
+        email: user.email
+      },
+      accessToken
+    });
+  } catch (error) {
+    console.error("Error in /login:", error);
+    return res.status(500).json({ error: true, message: "Internal server error" });
   }
-
-  const user = await User.findOne({ email });
-  if (!user) {
-    return res.status(400).json({ message: "User not found" });
-  }
-
-  const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch) {
-    return res.status(401).json({ message: "Invalid password" });
-  }
-
-  const accessToken = jwt.sign(
-    { userId: user._id },
-    process.env.ACCESS_TOKEN_SECRET,
-    { expiresIn: "72h" }
-  );
-
-  return res.status(200).json({
-    message: "Login successful",
-    user: {
-      fullName: user.fullName,
-      email: user.email
-    },
-    accessToken
-  });
 });
 
 
 //Get User
 app.get('/get-user', authenticateToken, async (req, res) => {
-  const { userId } = req.user;
+  try {
+    const { userId } = req.user;
 
-  const isUser = await User.findOne({ _id: userId });
+    const isUser = await User.findOne({ _id: userId });
 
-  if (!isUser) {
-    return res.sendStatus(401);
+    if (!isUser) {
+      return res.sendStatus(401);
+    }
+
+    return res.json({
+      user: isUser,
+      message: "",
+    });
+  } catch (error) {
+    console.error("Error in /get-user:", error);
+    return res.status(500).json({ error: true, message: "Internal server error" });
   }
-
-  return res.json({
-    user: isUser,
-    message: "",
-  });
 });
 
 // Route to handle image upload
@@ -135,27 +171,42 @@ app.delete("/delete-image", async (req, res) => {
   const { imageUrl } = req.query;
 
   if (!imageUrl) {
-    return res
-      .status(400)
-      .json({ error: true, message: "imageUrl parameter is required" });
+    return res.status(400).json({ error: true, message: "imageUrl parameter is required" });
   }
 
   try {
-    // Extract the filename from the imageUrl
-    const filename = path.basename(imageUrl);
-
-    // Define the file path
-    const filePath = path.join(__dirname, "uploads", filename);
-
-    // Check if the file exists
-    if (fs.existsSync(filePath)) {
-      // Delete the file from the uploads folder
-      fs.unlinkSync(filePath);
-      res.status(200).json({ message: "Image deleted successfully" });
+    // If the image is hosted on Cloudinary
+    if (imageUrl.includes("res.cloudinary.com")) {
+      // Extract public_id from the URL
+      // Example: https://res.cloudinary.com/<cloud_name>/image/upload/v1234567890/uploads/filename.jpg
+      const urlParts = imageUrl.split("/");
+      const uploadsIndex = urlParts.findIndex(part => part === "uploads");
+      let publicId = null;
+      if (uploadsIndex !== -1) {
+        publicId = urlParts.slice(uploadsIndex).join("/").replace(/\.[^/.]+$/, "");
+      }
+      if (!publicId) {
+        return res.status(400).json({ error: true, message: "Could not extract public_id from Cloudinary URL" });
+      }
+      const result = await cloudinary.uploader.destroy(publicId);
+      if (result.result === "ok") {
+        return res.status(200).json({ message: "Image deleted from Cloudinary successfully" });
+      } else {
+        return res.status(500).json({ error: true, message: "Failed to delete image from Cloudinary" });
+      }
     } else {
-      res.status(200).json({ error: true, message: "Image not found" });
+      // Local file deletion fallback
+      const filename = path.basename(imageUrl);
+      const filePath = path.join(__dirname, "uploads", filename);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+        return res.status(200).json({ message: "Image deleted successfully" });
+      } else {
+        return res.status(404).json({ error: true, message: "Image not found" });
+      }
     }
   } catch (error) {
+    console.error("Error in /delete-image:", error);
     res.status(500).json({ error: true, message: error.message });
   }
 });
@@ -231,14 +282,15 @@ app.put("/edit-story/:id", authenticateToken, async (req, res) => {
       return res.status(404).json({ error: true, message: "Travel story not found" });
     }
 
-    const placeholderImgUrl = 'http://localhost:8080/assets/placeholder.png';
 
-    // Update the travel story
-    travelStory.title = title;
-    travelStory.story = story;
-    travelStory.visitedLocation = visitedLocation;
-    travelStory.imageUrl = imageUrl || placeholderImgUrl; // Use provided or placeholder
-    travelStory.visitedDate = parsedVisitedDate;
+  const placeholderImgUrl = process.env.PLACEHOLDER_IMAGE_URL || 'http://localhost:8080/assets/placeholder.png';
+
+  // Update the travel story
+  travelStory.title = title;
+  travelStory.story = story;
+  travelStory.visitedLocation = visitedLocation;
+  travelStory.imageUrl = imageUrl || placeholderImgUrl; // Use provided or placeholder
+  travelStory.visitedDate = parsedVisitedDate;
 
     await travelStory.save();
 
